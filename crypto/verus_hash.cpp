@@ -26,9 +26,9 @@ void CVerusHash::Hash(void *result, const void *data, size_t len)
     memset(bufPtr, 0, 32);
 
     // digest up to 32 bytes at a time
-    for ( ; pos < len; pos += 32)
+    for ( ; pos < (int)len; pos += 32)
     {
-        if (len - pos >= 32)
+        if ((int)len - pos >= 32)
         {
             memcpy(bufPtr + 32, ptr + pos, 32);
         }
@@ -48,6 +48,7 @@ void CVerusHash::Hash(void *result, const void *data, size_t len)
 
 void CVerusHash::init()
 {
+    haraka512Function = &haraka512_port_zero;
     /*
     if (IsCPUVerusOptimized())
     {
@@ -58,7 +59,6 @@ void CVerusHash::init()
         haraka512Function = &haraka512_port_zero;
     }
     */
-    haraka512Function = &haraka512_port_zero;
 }
 
 CVerusHash &CVerusHash::Write(const unsigned char *data, size_t len)
@@ -66,11 +66,11 @@ CVerusHash &CVerusHash::Write(const unsigned char *data, size_t len)
     unsigned char *tmp;
 
     // digest up to 32 bytes at a time
-    for ( int pos = 0; pos < len; )
+    for (int pos = 0; pos < (int)len;)
     {
         int room = 32 - curPos;
 
-        if (len - pos >= room)
+        if ((int)len - pos >= room)
         {
             memcpy(curBuf + 32 + curPos, data + pos, room);
             (*haraka512Function)(result, curBuf);
@@ -100,6 +100,9 @@ void (*CVerusHashV2::haraka512Function)(unsigned char *out, const unsigned char 
 
 void CVerusHashV2::init()
 {
+    // load and tweak the haraka constants
+    load_constants_port();
+    haraka512Function = &haraka512_port;
     /*
     if (IsCPUVerusOptimized())
     {
@@ -113,9 +116,6 @@ void CVerusHashV2::init()
         haraka512Function = &haraka512_port;
     }
     */
-    // load and tweak the haraka constants
-    load_constants_port();
-    haraka512Function = &haraka512_port;
 }
 
 void CVerusHashV2::Hash(void *result, const void *data, size_t len)
@@ -130,15 +130,15 @@ void CVerusHashV2::Hash(void *result, const void *data, size_t len)
     memset(bufPtr, 0, 32);
 
     // digest up to 32 bytes at a time
-    for ( ; pos < len; pos += 32)
+    for ( ; pos < (int)len; pos += 32)
     {
-        if (len - pos >= 32)
+        if ((int)len - pos >= 32)
         {
             memcpy(bufPtr + 32, ptr + pos, 32);
         }
         else
         {
-            int i = (int)(len - pos);
+            int i = (int)((int)len - pos);
             memcpy(bufPtr + 32, ptr + pos, i);
             memset(bufPtr + 32 + i, 0, 32 - i);
         }
@@ -155,11 +155,11 @@ CVerusHashV2 &CVerusHashV2::Write(const unsigned char *data, size_t len)
     unsigned char *tmp;
 
     // digest up to 32 bytes at a time
-    for ( int pos = 0; pos < len; )
+    for ( int pos = 0; pos < (int)len; )
     {
         int room = 32 - curPos;
 
-        if (len - pos >= room)
+        if ((int)len - pos >= room)
         {
             memcpy(curBuf + 32 + curPos, data + pos, room);
             (*haraka512Function)(result, curBuf);
