@@ -6,8 +6,10 @@
             ],
             "sources": [
                 "crypto/common.h",
+                "crypto/haraka.h",
                 "crypto/haraka_portable.h",
                 "crypto/verus_hash.h",
+                "crypto/haraka.c",
                 "crypto/haraka_portable.c",
                 "crypto/verus_hash.cpp",
                 "verushash.cc",
