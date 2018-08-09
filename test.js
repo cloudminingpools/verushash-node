@@ -25,3 +25,15 @@ console.log('Output', reverseHex(output.toString('hex')), '\n');
 console.log('-- vh.reset().update(Buffer.from("Test","utf8")).digest() --');
 output = vh.reset().update(Buffer.from('Test','utf8')).digest();
 console.log('Output', reverseHex(output.toString('hex')), '\n');
+
+console.log('-- vh.reset().update(Buffer.from("Test1234","utf8")).digest() --');
+output = vh.reset().update(Buffer.from('Test1234','utf8')).digest();
+console.log('Output', reverseHex(output.toString('hex')), '\n');
+
+// benchmark
+var toHash = 1000000;
+var dateNow = Date.now();
+for (var i=0; i < toHash; i++) {
+    vh.reset().update(Buffer.from('Test1234','utf8')).digest();
+}
+console.log("Benchmark "+toHash.toString()+" Hashes took: "+(Date.now()-dateNow)+"msec");
