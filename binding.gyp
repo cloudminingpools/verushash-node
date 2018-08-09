@@ -26,7 +26,6 @@
                 "-fexceptions",
                 "-Ofast",
                 "-march=native",
-                "-msha",
                 "-msse4.1"
             ],
             "link_settings": {
