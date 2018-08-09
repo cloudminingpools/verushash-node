@@ -1,3 +1,6 @@
+var cluster = require('cluster');
+var vh = require('bindings')('verushash.node');
+
 var reverseBuffer = function (buff) {
     var reversed = Buffer.alloc(buff.length);
     for (var i = buff.length - 1; i >= 0; i--)
@@ -8,32 +11,33 @@ var reverseHex = function (hex) {
     return reverseBuffer(Buffer.from(hex, 'hex')).toString('hex');
 };
 
-var vh = require('bindings')('verushash.node');
+var numWorkers = require('os').cpus().length;
+numWorkers = 20;
 
-var output = vh.hash(Buffer.from('Test1234','utf8'));
-console.log('-- vh.hash(Buffer.from("Test1234","utf8")) --');
-console.log('Output', reverseHex(output.toString('hex')), '\n');
-
-console.log('-- vh.init().update(Buffer.from("Test","utf8")).update(Buffer.from("123","utf8")).update(Buffer.from("4","utf8")).digest(); --');
-output = vh.init().update(Buffer.from('Test','utf8')).update(Buffer.from('123','utf8')).update(Buffer.from('4','utf8')).digest();
-console.log('Output', reverseHex(output.toString('hex')), '\n');
-
-output = vh.hash(Buffer.from('Test','utf8'));
-console.log('-- vh.hash(Buffer.from("Test","utf8")) --');
-console.log('Output', reverseHex(output.toString('hex')), '\n');
-
-console.log('-- vh.reset().update(Buffer.from("Test","utf8")).digest() --');
-output = vh.reset().update(Buffer.from('Test','utf8')).digest();
-console.log('Output', reverseHex(output.toString('hex')), '\n');
-
-console.log('-- vh.reset().update(Buffer.from("Test1234","utf8")).digest() --');
-output = vh.reset().update(Buffer.from('Test1234','utf8')).digest();
-console.log('Output', reverseHex(output.toString('hex')), '\n');
-
-// benchmark
-var toHash = 1000000;
-var dateNow = Date.now();
-for (var i=0; i < toHash; i++) {
-    vh.reset().update(Buffer.from('Test1234','utf8')).digest();
+if (cluster.isMaster) {
+    
+    var workers = [];
+    var gbtCount = 0;
+    for (var i = 0; i < numWorkers; i++){
+        var worker = cluster.fork({
+            workerType: 'VerusHasher',
+            forkId: i
+        });
+        workers.push(worker);
+    }
+    
+} else {
+    
+    var output = vh.hash(Buffer.from('Test1234','utf8'));
+    console.log(process.pid,'Output', reverseHex(output.toString('hex')), '\n');    
+    output = vh.init().update(Buffer.from('Test','utf8')).update(Buffer.from('123','utf8')).update(Buffer.from('4','utf8')).digest();
+    console.log(process.pid,'Output', reverseHex(output.toString('hex')), '\n');
+    for (var i=0; i<100; i++) {
+        vh.reset();
+        vh.update(Buffer.from('Test','utf8'));
+        vh.update(Buffer.from('123','utf8'));
+        vh.update(Buffer.from('4','utf8'));
+        output = vh.digest();
+        console.log(process.pid,'Output', reverseHex(output.toString('hex')), '\n');
+    }
 }
-console.log("Benchmark "+toHash.toString()+" Hashes took: "+(Date.now()-dateNow)+"msec");
